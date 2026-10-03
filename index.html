@@ -3,24 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>星際礦業公司 - Incremental Game</title>
+  <title>Cyber Mining Station</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&display=swap');
+
     :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --accent: #38bdf8;
-      --accent-gold: #f59e0b;
-      --accent-energy: #10b981;
-      --accent-danger: #ef4444;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
+      --bg-dark: #030712;
+      --panel-bg: rgba(10, 16, 31, 0.75);
+      --panel-border: rgba(0, 240, 255, 0.25);
+      --accent-cyan: #00f0ff;
+      --accent-magenta: #e02424;
+      --accent-purple: #bc13fe;
+      --accent-gold: #ffaa00;
+      --accent-energy: #00ff88;
+      --accent-danger: #ff2a6d;
+      --text-main: #e2e8f0;
+      --text-muted: #64748b;
+      --font-tech: 'Orbitron', sans-serif;
+      --font-body: 'Rajdhani', sans-serif;
     }
 
     * { 
       box-sizing: border-box; 
       margin: 0; 
       padding: 0; 
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: var(--font-body);
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
@@ -30,7 +37,12 @@
     button { outline: none; }
 
     body { 
-      background-color: var(--bg-color); 
+      background-color: var(--bg-dark); 
+      background-image: 
+        radial-gradient(ellipse at top, rgba(0, 240, 255, 0.12), transparent 70%),
+        linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+      background-size: 100% 100%, 35px 35px, 35px 35px;
       color: var(--text-main); 
       padding: 20px; 
       display: flex; 
@@ -40,172 +52,287 @@
       overflow-x: hidden; 
     }
 
-    header { text-align: center; margin-bottom: 20px; }
-    h1 { color: var(--accent); margin-bottom: 5px; }
+    /* 自訂科技風格捲軸 */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(3, 7, 18, 0.8); }
+    ::-webkit-scrollbar-thumb { background: var(--accent-cyan); border-radius: 3px; box-shadow: 0 0 10px var(--accent-cyan); }
+
+    header { text-align: center; margin-bottom: 25px; position: relative; }
+    h1 { 
+      font-family: var(--font-tech);
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      text-shadow: 0 0 15px var(--accent-cyan), 0 0 30px rgba(0, 240, 255, 0.5);
+      margin-bottom: 5px;
+    }
     
     .stats-bar {
-      display: flex; gap: 20px; background: var(--card-bg); padding: 15px 25px; 
-      border-radius: 12px; border: 1px solid #334155; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;
+      display: flex; gap: 20px; 
+      background: var(--panel-bg); 
+      backdrop-filter: blur(12px);
+      padding: 15px 30px; 
+      border-radius: 4px; 
+      border: 1px solid var(--panel-border); 
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.1), inset 0 0 15px rgba(0, 240, 255, 0.05);
+      margin-bottom: 25px; flex-wrap: wrap; justify-content: center;
       align-items: center; position: relative;
+      clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
     }
-    .stat-item { text-align: center; }
-    .stat-value { font-size: 1.4rem; font-weight: bold; color: var(--accent-gold); }
-    .energy-value { color: var(--accent-energy); }
+
+    .stats-bar::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+    }
+
+    .stat-item { text-align: center; padding: 0 10px; }
+    .stat-label { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+    .stat-value { 
+      font-family: var(--font-tech); 
+      font-size: 1.5rem; 
+      font-weight: 700; 
+      color: var(--accent-gold); 
+      text-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+    }
+    .energy-value { color: var(--accent-energy); text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
 
     .buff-banner {
-      background: rgba(245, 158, 11, 0.15);
+      background: rgba(255, 170, 0, 0.15);
       border: 1px solid var(--accent-gold);
       color: var(--accent-gold);
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 0.85rem;
+      padding: 6px 16px;
+      border-radius: 4px;
+      font-family: var(--font-tech);
+      font-size: 0.8rem;
       font-weight: bold;
       display: none;
+      box-shadow: 0 0 15px rgba(255, 170, 0, 0.4);
       animation: pulse 1s infinite alternate;
     }
 
     .warning-banner {
-      background: rgba(239, 68, 68, 0.2);
+      background: rgba(255, 42, 109, 0.15);
       border: 1px solid var(--accent-danger);
       color: var(--accent-danger);
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 0.85rem;
+      padding: 6px 16px;
+      border-radius: 4px;
+      font-family: var(--font-tech);
+      font-size: 0.8rem;
       font-weight: bold;
       display: none;
+      box-shadow: 0 0 15px rgba(255, 42, 109, 0.4);
       animation: pulse 0.8s infinite alternate;
     }
 
     .game-container {
       display: grid; 
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); 
-      gap: 15px; 
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+      gap: 20px; 
       width: 100%; 
-      max-width: 1500px;
+      max-width: 1550px;
     }
 
     @media (min-width: 1200px) {
-      .game-container {
-        grid-template-columns: repeat(4, 1fr);
-      }
+      .game-container { grid-template-columns: repeat(4, 1fr); }
     }
 
     .panel {
-      background: var(--card-bg); border-radius: 12px; padding: 18px; 
-      border: 1px solid #334155; display: flex; flex-direction: column; gap: 12px;
+      background: var(--panel-bg); 
+      backdrop-filter: blur(10px);
+      border-radius: 4px; 
+      padding: 20px; 
+      border: 1px solid var(--panel-border); 
+      display: flex; flex-direction: column; gap: 15px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      position: relative;
     }
 
-    .tab-buttons { display: flex; gap: 6px; border-bottom: 1px solid #334155; padding-bottom: 8px; flex-wrap: wrap; }
-    .tab-btn {
-      flex: 1; min-width: 70px; background: #0f172a; border: 1px solid #334155; color: var(--text-muted);
-      padding: 8px 4px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: bold;
-      transition: all 0.2s; text-align: center;
+    /* 科技卡牌角落切點飾條 */
+    .panel::after {
+      content: ''; position: absolute; bottom: 0; right: 0; width: 12px; height: 12px;
+      border-right: 2px solid var(--accent-cyan); border-bottom: 2px solid var(--accent-cyan);
     }
-    .tab-btn.active { background: #0284c7; color: white; border-color: #38bdf8; }
+
+    .panel h3 {
+      font-family: var(--font-tech);
+      color: var(--accent-cyan);
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+      padding-bottom: 8px;
+    }
+
+    .tab-buttons { display: flex; gap: 4px; border-bottom: 1px solid var(--panel-border); padding-bottom: 10px; flex-wrap: wrap; }
+    .tab-btn {
+      flex: 1; min-width: 65px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(0, 240, 255, 0.2); color: var(--text-muted);
+      padding: 8px 4px; border-radius: 2px; cursor: pointer; font-family: var(--font-tech); font-size: 0.7rem; font-weight: bold;
+      transition: all 0.3s; text-align: center; text-transform: uppercase;
+    }
+    .tab-btn:hover { color: var(--accent-cyan); border-color: var(--accent-cyan); }
+    .tab-btn.active { 
+      background: rgba(0, 240, 255, 0.15); 
+      color: #fff; 
+      border-color: var(--accent-cyan); 
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+    }
 
     .click-section { align-items: center; justify-content: flex-start; text-align: center; }
 
-    @keyframes pulse {
-      0% { transform: scale(1); box-shadow: 0 0 20px rgba(56, 189, 248, 0.4); }
-      50% { transform: scale(1.04); box-shadow: 0 0 35px rgba(56, 189, 248, 0.6); }
-      100% { transform: scale(1); box-shadow: 0 0 20px rgba(56, 189, 248, 0.4); }
+    /* 量子核心反應爐按鈕 */
+    .reactor-container {
+      position: relative;
+      width: 170px;
+      height: 170px;
+      margin: 25px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    @keyframes mineClick { 0% { transform: scale(0.9); } 100% { transform: scale(1); } }
-    @keyframes ripple { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.6); opacity: 0; } }
+    .reactor-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px dashed var(--accent-cyan);
+      animation: rotateRing 12s linear infinite;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+    }
 
     .click-btn {
-      width: 150px; height: 150px; border-radius: 50%;
-      background: linear-gradient(135deg, #0284c7, #38bdf8);
-      border: 4px solid #7dd3fc; color: white;
-      font-size: 1.1rem; font-weight: bold; cursor: pointer;
+      width: 135px; height: 135px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 240, 255, 0.3) 0%, rgba(3, 7, 18, 0.9) 70%);
+      border: 2px solid var(--accent-cyan); color: #fff;
+      font-family: var(--font-tech); font-size: 1rem; font-weight: bold; cursor: pointer;
       display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
-      transition: box-shadow 0.2s, background 0.2s;
-      position: relative; overflow: hidden;
-      animation: pulse 2.5s infinite ease-in-out;
-      margin: 20px 0;
-      will-change: transform, box-shadow;
+      transition: all 0.2s;
+      position: relative; z-index: 2;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.4), inset 0 0 20px rgba(0, 240, 255, 0.3);
     }
 
-    .click-btn:hover { box-shadow: 0 0 30px rgba(56, 189, 248, 0.7); }
+    .click-btn:hover { 
+      box-shadow: 0 0 35px rgba(0, 240, 255, 0.8), inset 0 0 30px rgba(0, 240, 255, 0.5);
+      transform: scale(1.03);
+    }
     .click-btn:active {
-      animation: mineClick 0.1s ease-out; transform: none;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); 
+      transform: scale(0.95);
+      box-shadow: 0 0 50px var(--accent-cyan), inset 0 0 40px #fff;
     }
 
-    .click-btn::after {
-      content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255, 255, 255, 0.6); border-radius: 50%; opacity: 0; pointer-events: none;
+    @keyframes rotateRing {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
-    .click-btn:active::after { animation: ripple 0.4s ease-out; }
 
+    @keyframes pulse {
+      0% { opacity: 0.8; transform: scale(1); }
+      100% { opacity: 1; transform: scale(1.02); }
+    }
+
+    /* 科技感浮動文字 */
     .float-text {
-      position: fixed; pointer-events: none; font-weight: bold; font-size: 1.25rem;
-      color: #38bdf8; animation: floatUp 0.8s ease-out forwards; z-index: 9999;
-      text-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
+      position: fixed; pointer-events: none; font-family: var(--font-tech); font-weight: 800; font-size: 1.3rem;
+      color: var(--accent-cyan); animation: floatUp 0.8s ease-out forwards; z-index: 9999;
+      text-shadow: 0 0 10px var(--accent-cyan);
     }
-    .float-text.crit { color: #f59e0b; font-size: 1.6rem; text-shadow: 0 0 12px rgba(245, 158, 11, 0.9); }
-    .float-text.achieve { color: #c084fc; font-size: 1.2rem; text-shadow: 0 0 10px rgba(192, 132, 252, 0.9); }
+    .float-text.crit { color: var(--accent-gold); font-size: 1.7rem; text-shadow: 0 0 15px var(--accent-gold); }
+    .float-text.achieve { color: var(--accent-purple); font-size: 1.2rem; text-shadow: 0 0 15px var(--accent-purple); }
+    
     @keyframes floatUp {
-      0% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      0% { opacity: 1; transform: translate(-50%, 0) scale(0.8); }
       50% { transform: translate(-50%, -35px) scale(1.2); }
-      100% { opacity: 0; transform: translate(-50%, -70px) scale(0.8); }
+      100% { opacity: 0; transform: translate(-50%, -70px) scale(0.9); }
     }
 
+    /* 酷炫黃金隕石 */
     .asteroid {
       position: fixed; width: 65px; height: 65px; border-radius: 50%;
-      background: radial-gradient(circle, #fbbf24, #d97706);
-      box-shadow: 0 0 25px #f59e0b, 0 0 50px rgba(245, 158, 11, 0.6);
+      background: radial-gradient(circle, #fff, var(--accent-gold));
+      box-shadow: 0 0 25px var(--accent-gold), 0 0 50px rgba(255, 170, 0, 0.8);
       cursor: pointer; z-index: 1000; display: flex; align-items: center; justify-content: center;
-      font-size: 2rem; animation: asteroidFloat 1.5s infinite alternate ease-in-out;
+      font-size: 2rem; animation: asteroidFloat 2s infinite alternate ease-in-out;
     }
-    .asteroid:hover { transform: scale(1.15); }
+    .asteroid:hover { transform: scale(1.2); box-shadow: 0 0 40px var(--accent-gold); }
     @keyframes asteroidFloat {
       0% { transform: translateY(0px) rotate(0deg); }
-      100% { transform: translateY(-12px) rotate(15deg); }
+      100% { transform: translateY(-15px) rotate(20deg); }
     }
 
+    /* 項目卡牌裝飾 */
     .item-card {
-      background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px;
+      background: rgba(15, 23, 42, 0.7); 
+      border: 1px solid rgba(0, 240, 255, 0.15); 
+      border-radius: 4px; padding: 12px;
       display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .item-card:hover {
+      border-color: rgba(0, 240, 255, 0.4);
+      background: rgba(15, 23, 42, 0.9);
     }
     .item-info { display: flex; flex-direction: column; gap: 3px; }
-    .item-name { font-weight: bold; font-size: 0.9rem; }
-    .item-cost { font-size: 0.8rem; color: var(--accent-gold); }
-    .item-desc { font-size: 0.75rem; color: var(--text-muted); }
-    .energy-req { font-size: 0.75rem; color: var(--accent-energy); font-weight: bold; }
-    .energy-req.shortage { color: var(--accent-danger); }
-    .milestone-badge { font-size: 0.7rem; color: #38bdf8; font-weight: bold; }
+    .item-name { font-weight: bold; font-size: 0.95rem; color: #f1f5f9; }
+    .item-cost { font-family: var(--font-tech); font-size: 0.8rem; color: var(--accent-gold); }
+    .item-desc { font-size: 0.78rem; color: var(--text-muted); }
+    .energy-req { font-size: 0.78rem; color: var(--accent-energy); font-weight: bold; }
+    .energy-req.shortage { color: var(--accent-danger); text-shadow: 0 0 8px var(--accent-danger); }
+    .milestone-badge { font-family: var(--font-tech); font-size: 0.7rem; color: var(--accent-cyan); }
 
+    /* 按鈕樣式 */
     button.buy-btn {
-      background: #0284c7; border: none; color: white; padding: 6px 10px; 
-      border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem;
-      transition: background 0.2s; white-space: nowrap;
+      background: rgba(0, 240, 255, 0.1); 
+      border: 1px solid var(--accent-cyan); 
+      color: var(--accent-cyan); 
+      padding: 8px 12px; 
+      border-radius: 2px; cursor: pointer; font-family: var(--font-tech); font-weight: bold; font-size: 0.8rem;
+      transition: all 0.2s; white-space: nowrap; text-transform: uppercase;
     }
-    button.buy-btn:disabled { background: #475569; cursor: not-allowed; opacity: 0.6; }
-    button.buy-btn:not(:disabled):hover { background: #0369a1; }
+    button.buy-btn:not(:disabled):hover { 
+      background: var(--accent-cyan); 
+      color: #000; 
+      box-shadow: 0 0 15px var(--accent-cyan);
+    }
+    button.buy-btn:disabled { 
+      border-color: #334155; color: #475569; background: transparent; cursor: not-allowed; 
+    }
 
     .achieve-card {
-      background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px;
-      display: flex; align-items: center; gap: 10px; opacity: 0.5;
+      background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 4px; padding: 10px;
+      display: flex; align-items: center; gap: 12px; opacity: 0.4; transition: all 0.3s;
     }
-    .achieve-card.unlocked { opacity: 1; border-color: #c084fc; background: rgba(192, 132, 252, 0.05); }
-    .achieve-icon { font-size: 1.4rem; }
+    .achieve-card.unlocked { 
+      opacity: 1; 
+      border-color: var(--accent-purple); 
+      background: rgba(188, 19, 254, 0.08); 
+      box-shadow: 0 0 10px rgba(188, 19, 254, 0.2);
+    }
+    .achieve-icon { font-size: 1.5rem; }
 
-    .footer-controls { margin-top: 25px; display: flex; gap: 10px; }
-    .ctrl-btn { background: #334155; border: none; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; }
-    .ctrl-btn:hover { background: #475569; }
-    .danger-btn { background: #991b1b; }
-    .danger-btn:hover { background: #7f1d1d; }
+    .footer-controls { margin-top: 30px; display: flex; gap: 12px; }
+    .ctrl-btn { 
+      background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; color: var(--text-main); 
+      padding: 8px 16px; border-radius: 2px; cursor: pointer; font-family: var(--font-tech); font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+    .ctrl-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+    .danger-btn { border-color: var(--accent-danger); color: var(--accent-danger); }
+    .danger-btn:hover { background: var(--accent-danger); color: #fff; box-shadow: 0 0 15px var(--accent-danger); }
 
     .prestige-btn {
-      background: linear-gradient(135deg, #d97706, #f59e0b); color: white; border: none;
-      padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 0.85rem;
+      background: linear-gradient(135deg, rgba(255, 170, 0, 0.2), rgba(255, 170, 0, 0.05)); 
+      border: 1px solid var(--accent-gold); color: var(--accent-gold);
+      padding: 12px; border-radius: 4px; font-family: var(--font-tech); font-weight: bold; cursor: pointer; 
+      margin-top: 10px; font-size: 0.85rem; transition: all 0.3s; text-transform: uppercase;
     }
-    .prestige-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .prestige-btn:not(:disabled):hover {
+      background: var(--accent-gold); color: #000; box-shadow: 0 0 20px var(--accent-gold);
+    }
+    .prestige-btn:disabled { opacity: 0.4; border-color: #475569; color: #475569; cursor: not-allowed; }
 
     .planet-badge {
-      display: inline-block; background: #0284c7; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-left: 5px;
+      display: inline-block; background: var(--accent-cyan); color: #000; font-family: var(--font-tech); font-size: 0.65rem; font-weight: bold; padding: 2px 6px; border-radius: 2px; margin-left: 5px;
     }
   </style>
 </head>
@@ -213,55 +340,60 @@
 
   <header>
     <h1>🌌 星際礦業公司</h1>
-    <p style="color: var(--text-muted)">開採晶礦、平衡電力網，建立你的跨星系企業</p>
+    <p style="color: var(--text-muted); font-size: 0.9rem; letter-spacing: 1px;">CYBER MINING OPERATIONS CENTER</p>
   </header>
 
   <div class="stats-bar">
     <div class="stat-item">
-      <div>當前晶礦 (Coins)</div>
+      <div class="stat-label">當前晶礦 (Coins)</div>
       <div class="stat-value" id="coins-display">0</div>
     </div>
     <div class="stat-item">
-      <div>每秒產量 (CPS)</div>
+      <div class="stat-label">每秒產量 (CPS)</div>
       <div class="stat-value" id="cps-display">0</div>
     </div>
     <div class="stat-item">
-      <div>儲備能源 (Energy)</div>
+      <div class="stat-label">儲備能源 (Energy)</div>
       <div class="stat-value energy-value" id="energy-display">0</div>
       <div style="font-size: 0.75rem; color: var(--text-muted);" id="energy-rate-display">0/s</div>
     </div>
     <div class="stat-item">
-      <div>暗物質 (Prestige)</div>
-      <div class="stat-value" id="prestige-display" style="color: #c084fc;">0</div>
+      <div class="stat-label">暗物質 (Prestige)</div>
+      <div class="stat-value" id="prestige-display" style="color: var(--accent-purple); text-shadow: 0 0 10px rgba(188, 19, 254, 0.5);">0</div>
     </div>
     <div class="buff-banner" id="buff-status">
       🔥 黃金狂暴！CPS x7 (<span id="buff-time">0</span>s)
     </div>
     <div class="warning-banner" id="power-warning">
-      ⚡ 電力供不應求！高階設施效率下降至 20%
+      ⚡ 電網超載！高階設施效率下降至 20%
     </div>
   </div>
 
   <div class="game-container">
     <div class="panel click-section">
-      <h3>核心開採器</h3>
-      <button class="click-btn" id="main-click-btn">手動採礦<br>+<span id="click-power-display">1</span></button>
-      <p style="font-size: 0.8rem; color: var(--text-muted);">點擊按鈕獲取基礎晶礦資源</p>
-      <p style="font-size: 0.8rem; color: var(--accent); margin-top: 10px;">
-        當前駐紮：<strong id="current-planet-display">地球採礦總部</strong>
+      <h3>量子開採反應爐</h3>
+      <div class="reactor-container">
+        <div class="reactor-ring"></div>
+        <button class="click-btn" id="main-click-btn">
+          手動開採<br>+<span id="click-power-display">1</span>
+        </button>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-muted);">點擊反應爐核心開採高純度晶礦</p>
+      <p style="font-size: 0.85rem; color: var(--accent-cyan); margin-top: 12px; font-weight: bold;">
+        當前駐紮：<span id="current-planet-display" style="color: #fff;">地球採礦總部</span>
       </p>
     </div>
 
     <div class="panel">
-      <h3>⚡ 電力設施</h3>
-      <p style="font-size: 0.8rem; color: var(--text-muted)">提供持續穩定的能源供給</p>
-      <div id="powerplants-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      <h3>⚡ 電力設施網</h3>
+      <p style="font-size: 0.8rem; color: var(--text-muted)">提供全基地自動化設施之能源需求</p>
+      <div id="powerplants-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
     </div>
 
     <div class="panel">
-      <h3>⛏️ 採礦設施</h3>
-      <p style="font-size: 0.8rem; color: var(--text-muted)">高階設施運作時需消耗電力</p>
-      <div id="producers-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      <h3>⛏️ 自動採礦設施</h3>
+      <p style="font-size: 0.8rem; color: var(--text-muted)">高階設施運作需要穩定的電力支援</p>
+      <div id="producers-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
     </div>
 
     <div class="panel">
@@ -270,16 +402,16 @@
         <button class="tab-btn" onclick="switchTab('pshop', this)">暗物質</button>
         <button class="tab-btn" onclick="switchTab('planets', this)">星際殖民</button>
         <button class="tab-btn" onclick="switchTab('expeditions', this)">太空遠征</button>
-        <button class="tab-btn" onclick="switchTab('achievements', this)">成就</button>
+        <button class="tab-btn" onclick="switchTab('achievements', this)">成就記錄</button>
       </div>
 
       <div id="tab-upgrades" class="tab-content" style="display: flex; flex-direction: column; gap: 10px;">
-        <div id="upgrades-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
-        <hr style="border-color: #334155; margin: 5px 0;">
+        <div id="upgrades-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
+        <hr style="border-color: rgba(0, 240, 255, 0.15); margin: 5px 0;">
         <div style="display: flex; flex-direction: column; gap: 6px;">
-          <h4 style="color: #c084fc; font-size: 0.9rem;">量子轉生 (Prestige)</h4>
-          <p style="font-size: 0.75rem; color: var(--text-muted)">
-            重置金幣與設施，換取「暗物質」。每顆暗物質提供 <strong>+10% 全局產量</strong>。
+          <h4 style="color: var(--accent-purple); font-family: var(--font-tech); font-size: 0.9rem;">量子轉生 (QUANTUM PRESTIGE)</h4>
+          <p style="font-size: 0.78rem; color: var(--text-muted);">
+            重置當前金幣與設施，換取「暗物質」。每顆暗物質提供 <strong>+10% 全局產量</strong>。
           </p>
           <button class="prestige-btn" id="prestige-btn" disabled>
             轉生獲得 +<span id="prestige-gain-display">0</span> 暗物質
@@ -287,29 +419,29 @@
         </div>
       </div>
 
-      <div id="tab-pshop" class="tab-content" style="display: none; flex-direction: column; gap: 8px;">
-        <p style="font-size: 0.75rem; color: var(--text-muted);">消耗暗物質解鎖永久強烈效果（轉生後保留）。</p>
-        <div id="pshop-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      <div id="tab-pshop" class="tab-content" style="display: none; flex-direction: column; gap: 10px;">
+        <p style="font-size: 0.78rem; color: var(--text-muted);">消耗暗物質解鎖永久暗黑科技（轉生後保留）。</p>
+        <div id="pshop-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
       </div>
 
-      <div id="tab-planets" class="tab-content" style="display: none; flex-direction: column; gap: 8px;">
-        <p style="font-size: 0.75rem; color: var(--text-muted);">解鎖並遷移至新星球，享受不同星球的環境產能加成。</p>
-        <div id="planets-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      <div id="tab-planets" class="tab-content" style="display: none; flex-direction: column; gap: 10px;">
+        <p style="font-size: 0.78rem; color: var(--text-muted);">開闢並切換至不同星系，獲取獨特環境加成。</p>
+        <div id="planets-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
       </div>
 
-      <div id="tab-expeditions" class="tab-content" style="display: none; flex-direction: column; gap: 8px;">
-        <p style="font-size: 0.75rem; color: var(--text-muted);">派遣礦業艦隊進行太空遠征，獲取大量資源與暗物質。</p>
-        <div id="expedition-status-box" style="background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155; font-size: 0.8rem;">
-          <div>目前狀態：<span id="exp-status-text" style="color: var(--accent);">閒置中</span></div>
-          <div id="exp-timer-text" style="color: var(--accent-gold); margin-top: 4px;"></div>
-          <button class="buy-btn" id="exp-claim-btn" style="margin-top: 8px; display: none;" onclick="claimExpeditionReward()">領取遠征獎勵</button>
+      <div id="tab-expeditions" class="tab-content" style="display: none; flex-direction: column; gap: 10px;">
+        <p style="font-size: 0.78rem; color: var(--text-muted);">派遣遠征艦隊探索深空，攜回極珍貴資源。</p>
+        <div id="expedition-status-box" style="background: rgba(15, 23, 42, 0.8); padding: 12px; border-radius: 4px; border: 1px solid rgba(0, 240, 255, 0.2); font-size: 0.85rem;">
+          <div>艦隊動態：<span id="exp-status-text" style="color: var(--accent-cyan); font-weight: bold;">閒置中</span></div>
+          <div id="exp-timer-text" style="color: var(--accent-gold); font-family: var(--font-tech); margin-top: 4px;"></div>
+          <button class="buy-btn" id="exp-claim-btn" style="margin-top: 10px; display: none;" onclick="claimExpeditionReward()">領取遠征戰果</button>
         </div>
-        <div id="expeditions-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        <div id="expeditions-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
       </div>
 
-      <div id="tab-achievements" class="tab-content" style="display: none; flex-direction: column; gap: 8px;">
-        <p style="font-size: 0.75rem; color: var(--text-muted);">解鎖成就可獲得永久全局產量加成（每項成就 +2%）。</p>
-        <div id="achievements-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      <div id="tab-achievements" class="tab-content" style="display: none; flex-direction: column; gap: 10px;">
+        <p style="font-size: 0.78rem; color: var(--text-muted);">里程碑成就可提供永久全局增益（每項成就 +2%）。</p>
+        <div id="achievements-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
       </div>
     </div>
   </div>
@@ -339,19 +471,19 @@
       disruptor: { count: 0, baseCost: 15000, cps: 280, energyReq: 25, name: "反物質採礦機" }
     },
     upgrades: {
-      laserClick: { bought: false, cost: 100, name: "雷射挖掘頭", desc: "點擊收益 x2", multiplier: 2 },
-      aiOptimization: { bought: false, cost: 500, name: "AI 算力優化", desc: "所有設施產能 x2", multiplier: 2 },
-      gridOverclock: { bought: false, cost: 2000, name: "電網超頻協定", desc: "發電設施產能 x1.5", multiplier: 1.5 }
+      laserClick: { bought: false, cost: 100, name: "高能聚焦脈衝", desc: "點擊收益 x2", multiplier: 2 },
+      aiOptimization: { bought: false, cost: 500, name: "AI 神經網絡優化", desc: "所有設施產能 x2", multiplier: 2 },
+      gridOverclock: { bought: false, cost: 2000, name: "超導電網協定", desc: "發電設施產能 x1.5", multiplier: 1.5 }
     },
     pshop: {
-      autoClick: { level: 0, maxLevel: 5, cost: 2, name: "量子自動點擊", desc: "每秒自動觸發點擊" },
-      critChance: { level: 0, maxLevel: 5, cost: 3, name: "超能暴擊率", desc: "暴擊率提升 +5%" },
-      energyEfficiency: { level: 0, maxLevel: 5, cost: 4, name: "節能技術", desc: "設施耗電量降低 -10%" }
+      autoClick: { level: 0, maxLevel: 5, cost: 2, name: "量子自動採集", desc: "每秒自動觸發點擊" },
+      critChance: { level: 0, maxLevel: 5, cost: 3, name: "高能暴擊矩陣", desc: "暴擊率提升 +5%" },
+      energyEfficiency: { level: 0, maxLevel: 5, cost: 4, name: "零點能節約", desc: "設施耗電量降低 -10%" }
     },
     planets: {
       currentPlanet: "earth",
       list: {
-        earth: { name: "地球採礦總部", cost: 0, unlocked: true, cpsMult: 1, energyGenMult: 1, energyConsMult: 1, desc: "標準環境，無特殊修正。" },
+        earth: { name: "地球採礦總部", cost: 0, unlocked: true, cpsMult: 1, energyGenMult: 1, energyConsMult: 1, desc: "標準環境，無特殊環境修正。" },
         mars:  { name: "火星前哨站", cost: 1000000, unlocked: false, cpsMult: 1.5, energyGenMult: 1, energyConsMult: 1.2, desc: "高產能區域：全局 CPS x1.5，但耗電量 +20%。" },
         europa:{ name: "歐羅巴冰原", cost: 50000000, unlocked: false, cpsMult: 2.5, energyGenMult: 1.3, energyConsMult: 0.9, desc: "冰封能源庫：全局 CPS x2.5，發電效率 +30%，耗電 -10%。" },
         titan: { name: "土衛六巨星", cost: 1000000000, unlocked: false, cpsMult: 6.0, energyGenMult: 1.5, energyConsMult: 1, desc: "重工業樞紐：全局 CPS x6.0，發電效率 +50%。" }
@@ -362,18 +494,18 @@
       endTime: 0,
       completed: false,
       missions: {
-        patrol: { name: "近地軌道巡邏", duration: 60, cost: 5000, rewardType: "coins", rewardVal: 100000, desc: "耗時 1 分鐘，收穫大量晶礦。" },
-        belt:   { name: "小行星帶探勘", duration: 300, cost: 100000, rewardType: "darkMatter", rewardVal: 2, desc: "耗時 5 分鐘，可獲得 2 顆暗物質。" },
-        deep:   { name: "深空黑洞探索", duration: 900, cost: 5000000, rewardType: "darkMatter", rewardVal: 10, desc: "耗時 15 分鐘，極高回報，獲得 10 顆暗物質。" }
+        patrol: { name: "近地軌道巡邏", duration: 60, cost: 5000, rewardType: "coins", rewardVal: 100000, desc: "耗時 1 分鐘，帶回大量礦石。" },
+        belt:   { name: "小行星帶探勘", duration: 300, cost: 100000, rewardType: "darkMatter", rewardVal: 2, desc: "耗時 5 分鐘，提煉 2 顆暗物質。" },
+        deep:   { name: "深空黑洞探索", duration: 900, cost: 5000000, rewardType: "darkMatter", rewardVal: 10, desc: "耗時 15 分鐘，提煉 10 顆暗物質。" }
       }
     },
     achievements: {
-      click1: { unlocked: false, name: "礦業開端", desc: "手動採礦 1 次", icon: "⛏️" },
-      click100: { unlocked: false, name: "勤奮礦工", desc: "手動採礦 100 次", icon: "💪" },
-      solar5: { unlocked: false, name: "綠能先風", desc: "建造 5 座太陽能陣列", icon: "☀️" },
-      reactor1: { unlocked: false, name: "核能時代", desc: "建造 1 座核能反應爐", icon: "☢️" },
-      coins10k: { unlocked: false, name: "晶礦富豪", desc: "累積獲得 10,000 晶礦", icon: "💰" },
-      prestige1: { unlocked: false, name: "量子躍遷", desc: "完成第一次量子轉生", icon: "🌌" }
+      click1: { unlocked: false, name: "核心啟動", desc: "手動採礦 1 次", icon: "⛏️" },
+      click100: { unlocked: false, name: "高能運載", desc: "手動採礦 100 次", icon: "⚡" },
+      solar5: { unlocked: false, name: "光伏網頁", desc: "建造 5 座太陽能陣列", icon: "☀️" },
+      reactor1: { unlocked: false, name: "原子解鎖", desc: "建造 1 座核能反應爐", icon: "☢️" },
+      coins10k: { unlocked: false, name: "星際大亨", desc: "累積獲得 10,000 晶礦", icon: "💎" },
+      prestige1: { unlocked: false, name: "時空躍遷", desc: "完成第一次量子轉生", icon: "🌌" }
     }
   };
 
@@ -381,7 +513,6 @@
   let buffTimer = 0;
   let autoClickAccumulator = 0;
 
-  // 防呆數字格式化
   function formatNum(n) {
     if (isNaN(n) || n === null || n === undefined) return "0";
     if (n < 1000) return Math.floor(n).toString();
@@ -483,7 +614,6 @@
     if (gameState.upgrades.aiOptimization?.bought) rawCPS *= gameState.upgrades.aiOptimization.multiplier;
     let total = rawCPS * (1 + (gameState.prestigePoints || 0) * 0.1) * getAchMult();
     
-    // 星球加成
     const pData = getCurrentPlanetData();
     total *= (pData.cpsMult || 1);
 
@@ -598,7 +728,6 @@
       psContainer.appendChild(div);
     }
 
-    // 星球面板渲染
     const planetsContainer = document.getElementById("planets-container");
     planetsContainer.innerHTML = "";
     for (const key in gameState.planets.list) {
@@ -617,7 +746,6 @@
       planetsContainer.appendChild(div);
     }
 
-    // 遠征面板渲染
     const expContainer = document.getElementById("expeditions-container");
     expContainer.innerHTML = "";
     for (const key in gameState.expedition.missions) {
@@ -720,7 +848,6 @@
       btn.disabled = gameState.prestigePoints < ps.cost || ps.level >= ps.maxLevel;
     }
 
-    // 星球 UI 更新
     for (const key in gameState.planets.list) {
       const p = gameState.planets.list[key];
       const btn = document.getElementById(`btn-planet-${key}`);
@@ -730,7 +857,7 @@
       badge.style.display = (gameState.planets.currentPlanet === key) ? "inline-block" : "none";
 
       if (p.unlocked) {
-        costEl.innerText = "狀態: 已開闢領域";
+        costEl.innerText = "狀態: 已建立領地";
         if (gameState.planets.currentPlanet === key) {
           btn.innerText = "駐紮中";
           btn.disabled = true;
@@ -745,7 +872,6 @@
       }
     }
 
-    // 遠征 UI 更新
     const exp = gameState.expedition;
     const statusText = document.getElementById("exp-status-text");
     const timerText = document.getElementById("exp-timer-text");
@@ -758,14 +884,14 @@
       claimBtn.style.display = "none";
     } else if (exp.completed) {
       const m = exp.missions[exp.activeKey];
-      statusText.innerText = `遠征完成：[${m.name}] 順利返航！`;
+      statusText.innerText = `任務完成：[${m.name}] 返航！`;
       statusText.style.color = "var(--accent-energy)";
-      timerText.innerText = "等待領取獎勵中...";
+      timerText.innerText = "等待接收戰利品...";
       claimBtn.style.display = "inline-block";
     } else {
       const m = exp.missions[exp.activeKey];
       const remainSec = Math.max(0, Math.ceil((exp.endTime - Date.now()) / 1000));
-      statusText.innerText = `艦隊遠征中：[${m.name}]`;
+      statusText.innerText = `遠征執行中：[${m.name}]`;
       statusText.style.color = "var(--accent-gold)";
       timerText.innerText = `剩餘時間：${remainSec} 秒`;
       claimBtn.style.display = "none";
@@ -830,10 +956,10 @@
     if (m.rewardType === "coins") {
       gameState.coins += m.rewardVal;
       gameState.totalCoins += m.rewardVal;
-      createFloatText(window.innerWidth / 2, 200, `💰 獲得遠征獎勵 +${formatNum(m.rewardVal)} 晶礦!`, true);
+      createFloatText(window.innerWidth / 2, 200, `💰 獲得資源 +${formatNum(m.rewardVal)} 晶礦!`, true);
     } else if (m.rewardType === "darkMatter") {
       gameState.prestigePoints += m.rewardVal;
-      createFloatText(window.innerWidth / 2, 200, `🌌 獲得遠征獎勵 +${m.rewardVal} 暗物質!`, true);
+      createFloatText(window.innerWidth / 2, 200, `🌌 獲得資源 +${m.rewardVal} 暗物質!`, true);
     }
 
     exp.activeKey = null;
@@ -999,7 +1125,6 @@
         }
 
         const now = Date.now();
-        // 檢查遠征是否在離線期間完成
         if (gameState.expedition.activeKey && !gameState.expedition.completed) {
           if (now >= gameState.expedition.endTime) {
             gameState.expedition.completed = true;
@@ -1013,7 +1138,7 @@
             gameState.coins += offlineGains;
             gameState.totalCoins += offlineGains;
             setTimeout(() => {
-              alert(`歡迎回來！離線 ${Math.floor(offlineSeconds)} 秒期間，你一共獲得了 ${formatNum(offlineGains)} 晶礦。`);
+              alert(`歡迎回到戰情室！離線 ${Math.floor(offlineSeconds)} 秒期間，系統已為你採集 ${formatNum(offlineGains)} 晶礦。`);
             }, 500);
           }
         }
@@ -1041,12 +1166,11 @@
       if (buffTimer < 0) buffTimer = 0;
     }
 
-    // 檢查遠征進度
     const exp = gameState.expedition;
     if (exp.activeKey && !exp.completed) {
       if (now >= exp.endTime) {
         exp.completed = true;
-        createFloatText(window.innerWidth / 2, 180, "🛸 遠征艦隊順利返航！點擊領取獎勵", true);
+        createFloatText(window.innerWidth / 2, 180, "🛸 遠征艦隊順利返航！點擊領取戰利品", true);
       }
     }
 
