@@ -95,11 +95,11 @@
       border: 1px solid #334155; display: flex; flex-direction: column; gap: 12px;
     }
 
-    .tab-buttons { display: flex; gap: 6px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
+    .tab-buttons { display: flex; gap: 6px; border-bottom: 1px solid #334155; padding-bottom: 8px; flex-wrap: wrap; }
     .tab-btn {
-      flex: 1; background: #0f172a; border: 1px solid #334155; color: var(--text-muted);
-      padding: 8px 4px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold;
-      transition: all 0.2s;
+      flex: 1; min-width: 70px; background: #0f172a; border: 1px solid #334155; color: var(--text-muted);
+      padding: 8px 4px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: bold;
+      transition: all 0.2s; text-align: center;
     }
     .tab-btn.active { background: #0284c7; color: white; border-color: #38bdf8; }
 
@@ -203,6 +203,10 @@
       padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 0.85rem;
     }
     .prestige-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .planet-badge {
+      display: inline-block; background: #0284c7; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-left: 5px;
+    }
   </style>
 </head>
 <body>
@@ -243,6 +247,9 @@
       <h3>核心開採器</h3>
       <button class="click-btn" id="main-click-btn">手動採礦<br>+<span id="click-power-display">1</span></button>
       <p style="font-size: 0.8rem; color: var(--text-muted);">點擊按鈕獲取基礎晶礦資源</p>
+      <p style="font-size: 0.8rem; color: var(--accent); margin-top: 10px;">
+        當前駐紮：<strong id="current-planet-display">地球採礦總部</strong>
+      </p>
     </div>
 
     <div class="panel">
@@ -259,9 +266,11 @@
 
     <div class="panel">
       <div class="tab-buttons">
-        <button class="tab-btn active" onclick="switchTab('upgrades')">科技研發</button>
-        <button class="tab-btn" onclick="switchTab('pshop')">暗物質商店</button>
-        <button class="tab-btn" onclick="switchTab('achievements')">成就獎勵</button>
+        <button class="tab-btn active" onclick="switchTab('upgrades', this)">科技研發</button>
+        <button class="tab-btn" onclick="switchTab('pshop', this)">暗物質</button>
+        <button class="tab-btn" onclick="switchTab('planets', this)">星際殖民</button>
+        <button class="tab-btn" onclick="switchTab('expeditions', this)">太空遠征</button>
+        <button class="tab-btn" onclick="switchTab('achievements', this)">成就</button>
       </div>
 
       <div id="tab-upgrades" class="tab-content" style="display: flex; flex-direction: column; gap: 10px;">
@@ -281,6 +290,21 @@
       <div id="tab-pshop" class="tab-content" style="display: none; flex-direction: column; gap: 8px;">
         <p style="font-size: 0.75rem; color: var(--text-muted);">消耗暗物質解鎖永久強烈效果（轉生後保留）。</p>
         <div id="pshop-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
+
+      <div id="tab-planets" class="tab-content" style="display: none; flex-direction: column; gap: 8px;">
+        <p style="font-size: 0.75rem; color: var(--text-muted);">解鎖並遷移至新星球，享受不同星球的環境產能加成。</p>
+        <div id="planets-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
+
+      <div id="tab-expeditions" class="tab-content" style="display: none; flex-direction: column; gap: 8px;">
+        <p style="font-size: 0.75rem; color: var(--text-muted);">派遣礦業艦隊進行太空遠征，獲取大量資源與暗物質。</p>
+        <div id="expedition-status-box" style="background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155; font-size: 0.8rem;">
+          <div>目前狀態：<span id="exp-status-text" style="color: var(--accent);">閒置中</span></div>
+          <div id="exp-timer-text" style="color: var(--accent-gold); margin-top: 4px;"></div>
+          <button class="buy-btn" id="exp-claim-btn" style="margin-top: 8px; display: none;" onclick="claimExpeditionReward()">領取遠征獎勵</button>
+        </div>
+        <div id="expeditions-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
       </div>
 
       <div id="tab-achievements" class="tab-content" style="display: none; flex-direction: column; gap: 8px;">
@@ -324,6 +348,25 @@
       critChance: { level: 0, maxLevel: 5, cost: 3, name: "超能暴擊率", desc: "暴擊率提升 +5%" },
       energyEfficiency: { level: 0, maxLevel: 5, cost: 4, name: "節能技術", desc: "設施耗電量降低 -10%" }
     },
+    planets: {
+      currentPlanet: "earth",
+      list: {
+        earth: { name: "地球採礦總部", cost: 0, unlocked: true, cpsMult: 1, energyGenMult: 1, energyConsMult: 1, desc: "標準環境，無特殊修正。" },
+        mars:  { name: "火星前哨站", cost: 1000000, unlocked: false, cpsMult: 1.5, energyGenMult: 1, energyConsMult: 1.2, desc: "高產能區域：全局 CPS x1.5，但耗電量 +20%。" },
+        europa:{ name: "歐羅巴冰原", cost: 50000000, unlocked: false, cpsMult: 2.5, energyGenMult: 1.3, energyConsMult: 0.9, desc: "冰封能源庫：全局 CPS x2.5，發電效率 +30%，耗電 -10%。" },
+        titan: { name: "土衛六巨星", cost: 1000000000, unlocked: false, cpsMult: 6.0, energyGenMult: 1.5, energyConsMult: 1, desc: "重工業樞紐：全局 CPS x6.0，發電效率 +50%。" }
+      }
+    },
+    expedition: {
+      activeKey: null,
+      endTime: 0,
+      completed: false,
+      missions: {
+        patrol: { name: "近地軌道巡邏", duration: 60, cost: 5000, rewardType: "coins", rewardVal: 100000, desc: "耗時 1 分鐘，收穫大量晶礦。" },
+        belt:   { name: "小行星帶探勘", duration: 300, cost: 100000, rewardType: "darkMatter", rewardVal: 2, desc: "耗時 5 分鐘，可獲得 2 顆暗物質。" },
+        deep:   { name: "深空黑洞探索", duration: 900, cost: 5000000, rewardType: "darkMatter", rewardVal: 10, desc: "耗時 15 分鐘，極高回報，獲得 10 顆暗物質。" }
+      }
+    },
     achievements: {
       click1: { unlocked: false, name: "礦業開端", desc: "手動採礦 1 次", icon: "⛏️" },
       click100: { unlocked: false, name: "勤奮礦工", desc: "手動採礦 100 次", icon: "💪" },
@@ -364,17 +407,27 @@
     return "MAX";
   }
 
+  function getCurrentPlanetData() {
+    const pKey = gameState.planets?.currentPlanet || "earth";
+    return gameState.planets?.list?.[pKey] || gameState.planets?.list?.earth;
+  }
+
   function getEnergyStats() {
+    const pData = getCurrentPlanetData();
+    const planetGenMult = pData.energyGenMult || 1;
+    const planetConsMult = pData.energyConsMult || 1;
+
     let gen = 0;
     let gridMult = gameState.upgrades.gridOverclock?.bought ? gameState.upgrades.gridOverclock.multiplier : 1;
     for (const key in gameState.powerPlants) {
       const plant = gameState.powerPlants[key];
       gen += (plant.count || 0) * (plant.eps || 0) * gridMult;
     }
+    gen *= planetGenMult;
 
     let cons = 0;
     const effLevel = gameState.pshop?.energyEfficiency?.level || 0;
-    const effMult = 1 - (effLevel * 0.1);
+    const effMult = (1 - (effLevel * 0.1)) * planetConsMult;
     for (const key in gameState.producers) {
       const p = gameState.producers[key];
       cons += (p.count || 0) * (p.energyReq || 0) * effMult;
@@ -400,7 +453,8 @@
     let base = 1;
     if (gameState.upgrades.laserClick?.bought) base *= gameState.upgrades.laserClick.multiplier;
     const prestigeMult = 1 + ((gameState.prestigePoints || 0) * 0.1);
-    return base * prestigeMult * getAchMult();
+    const pData = getCurrentPlanetData();
+    return base * prestigeMult * getAchMult() * (pData.cpsMult || 1);
   }
 
   function getPowerPlantCost(key) {
@@ -428,6 +482,11 @@
 
     if (gameState.upgrades.aiOptimization?.bought) rawCPS *= gameState.upgrades.aiOptimization.multiplier;
     let total = rawCPS * (1 + (gameState.prestigePoints || 0) * 0.1) * getAchMult();
+    
+    // 星球加成
+    const pData = getCurrentPlanetData();
+    total *= (pData.cpsMult || 1);
+
     if (buffTimer > 0) total *= 7;
     return total;
   }
@@ -458,12 +517,13 @@
     updateUI();
   }
 
-  function switchTab(tabName) {
+  function switchTab(tabName, btnEl) {
     document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
     document.querySelectorAll(".tab-content").forEach(content => content.style.display = "none");
 
-    event.target.classList.add("active");
-    document.getElementById(`tab-${tabName}`).style.display = "flex";
+    if (btnEl) btnEl.classList.add("active");
+    const targetTab = document.getElementById(`tab-${tabName}`);
+    if (targetTab) targetTab.style.display = "flex";
   }
 
   function initDOM() {
@@ -538,6 +598,43 @@
       psContainer.appendChild(div);
     }
 
+    // 星球面板渲染
+    const planetsContainer = document.getElementById("planets-container");
+    planetsContainer.innerHTML = "";
+    for (const key in gameState.planets.list) {
+      const p = gameState.planets.list[key];
+      const div = document.createElement("div");
+      div.className = "item-card";
+      div.id = `planet-card-${key}`;
+      div.innerHTML = `
+        <div class="item-info">
+          <span class="item-name">${p.name} <span class="planet-badge" id="badge-planet-${key}" style="display:none;">駐紮中</span></span>
+          <span class="item-desc">${p.desc}</span>
+          <span class="item-cost" id="cost-planet-${key}">花費: ${formatNum(p.cost)} 晶礦</span>
+        </div>
+        <button class="buy-btn" id="btn-planet-${key}" onclick="handlePlanetClick('${key}')">解鎖</button>
+      `;
+      planetsContainer.appendChild(div);
+    }
+
+    // 遠征面板渲染
+    const expContainer = document.getElementById("expeditions-container");
+    expContainer.innerHTML = "";
+    for (const key in gameState.expedition.missions) {
+      const m = gameState.expedition.missions[key];
+      const div = document.createElement("div");
+      div.className = "item-card";
+      div.innerHTML = `
+        <div class="item-info">
+          <span class="item-name">${m.name}</span>
+          <span class="item-desc">${m.desc}</span>
+          <span class="item-cost">派遣準備金: ${formatNum(m.cost)} 晶礦</span>
+        </div>
+        <button class="buy-btn" id="btn-exp-${key}" onclick="startExpedition('${key}')">派遣</button>
+      `;
+      expContainer.appendChild(div);
+    }
+
     const aContainer = document.getElementById("achievements-container");
     aContainer.innerHTML = "";
     for (const key in gameState.achievements) {
@@ -561,6 +658,9 @@
     document.getElementById("energy-display").innerText = formatNum(gameState.energy);
     document.getElementById("prestige-display").innerText = formatNum(gameState.prestigePoints);
     document.getElementById("click-power-display").innerText = formatNum(getClickPower());
+
+    const pData = getCurrentPlanetData();
+    document.getElementById("current-planet-display").innerText = pData.name;
 
     const eStats = getEnergyStats();
     const netSign = eStats.net >= 0 ? "+" : "";
@@ -620,6 +720,63 @@
       btn.disabled = gameState.prestigePoints < ps.cost || ps.level >= ps.maxLevel;
     }
 
+    // 星球 UI 更新
+    for (const key in gameState.planets.list) {
+      const p = gameState.planets.list[key];
+      const btn = document.getElementById(`btn-planet-${key}`);
+      const badge = document.getElementById(`badge-planet-${key}`);
+      const costEl = document.getElementById(`cost-planet-${key}`);
+
+      badge.style.display = (gameState.planets.currentPlanet === key) ? "inline-block" : "none";
+
+      if (p.unlocked) {
+        costEl.innerText = "狀態: 已開闢領域";
+        if (gameState.planets.currentPlanet === key) {
+          btn.innerText = "駐紮中";
+          btn.disabled = true;
+        } else {
+          btn.innerText = "前往星球";
+          btn.disabled = false;
+        }
+      } else {
+        costEl.innerText = `花費: ${formatNum(p.cost)} 晶礦`;
+        btn.innerText = "解鎖";
+        btn.disabled = gameState.coins < p.cost;
+      }
+    }
+
+    // 遠征 UI 更新
+    const exp = gameState.expedition;
+    const statusText = document.getElementById("exp-status-text");
+    const timerText = document.getElementById("exp-timer-text");
+    const claimBtn = document.getElementById("exp-claim-btn");
+
+    if (!exp.activeKey) {
+      statusText.innerText = "艦隊閒置中";
+      statusText.style.color = "var(--text-muted)";
+      timerText.innerText = "";
+      claimBtn.style.display = "none";
+    } else if (exp.completed) {
+      const m = exp.missions[exp.activeKey];
+      statusText.innerText = `遠征完成：[${m.name}] 順利返航！`;
+      statusText.style.color = "var(--accent-energy)";
+      timerText.innerText = "等待領取獎勵中...";
+      claimBtn.style.display = "inline-block";
+    } else {
+      const m = exp.missions[exp.activeKey];
+      const remainSec = Math.max(0, Math.ceil((exp.endTime - Date.now()) / 1000));
+      statusText.innerText = `艦隊遠征中：[${m.name}]`;
+      statusText.style.color = "var(--accent-gold)";
+      timerText.innerText = `剩餘時間：${remainSec} 秒`;
+      claimBtn.style.display = "none";
+    }
+
+    for (const key in exp.missions) {
+      const m = exp.missions[key];
+      const btn = document.getElementById(`btn-exp-${key}`);
+      btn.disabled = !!exp.activeKey || gameState.coins < m.cost;
+    }
+
     const pGain = getPrestigeGain();
     const pBtn = document.getElementById("prestige-btn");
     document.getElementById("prestige-gain-display").innerText = formatNum(pGain);
@@ -632,6 +789,56 @@
     } else {
       buffBanner.style.display = "none";
     }
+  }
+
+  function handlePlanetClick(key) {
+    const p = gameState.planets.list[key];
+    if (!p.unlocked) {
+      if (gameState.coins >= p.cost) {
+        gameState.coins -= p.cost;
+        p.unlocked = true;
+        gameState.planets.currentPlanet = key;
+        createFloatText(window.innerWidth / 2, 200, `🪐 解鎖並抵達：${p.name}!`, true);
+        updateUI();
+      }
+    } else {
+      gameState.planets.currentPlanet = key;
+      createFloatText(window.innerWidth / 2, 200, `🚀 已切換至：${p.name}`);
+      updateUI();
+    }
+  }
+
+  function startExpedition(key) {
+    const exp = gameState.expedition;
+    if (exp.activeKey) return;
+    const m = exp.missions[key];
+    if (gameState.coins >= m.cost) {
+      gameState.coins -= m.cost;
+      exp.activeKey = key;
+      exp.endTime = Date.now() + (m.duration * 1000);
+      exp.completed = false;
+      createFloatText(window.innerWidth / 2, 200, `🛸 艦隊已出發：${m.name}!`);
+      updateUI();
+    }
+  }
+
+  function claimExpeditionReward() {
+    const exp = gameState.expedition;
+    if (!exp.activeKey || !exp.completed) return;
+
+    const m = exp.missions[exp.activeKey];
+    if (m.rewardType === "coins") {
+      gameState.coins += m.rewardVal;
+      gameState.totalCoins += m.rewardVal;
+      createFloatText(window.innerWidth / 2, 200, `💰 獲得遠征獎勵 +${formatNum(m.rewardVal)} 晶礦!`, true);
+    } else if (m.rewardType === "darkMatter") {
+      gameState.prestigePoints += m.rewardVal;
+      createFloatText(window.innerWidth / 2, 200, `🌌 獲得遠征獎勵 +${m.rewardVal} 暗物質!`, true);
+    }
+
+    exp.activeKey = null;
+    exp.completed = false;
+    updateUI();
   }
 
   function createFloatText(x, y, text, isCrit = false, isAchieve = false) {
@@ -759,7 +966,6 @@
     if (manual) alert("遊戲進度已成功儲存！");
   }
 
-  // 修正存檔自動補齊缺少的屬性
   function loadGame() {
     const saved = localStorage.getItem("incremental_game_save");
     if (saved) {
@@ -770,7 +976,6 @@
           ...parsed
         };
 
-        // 深層補充預設屬性（避免舊存檔蓋掉新屬性）
         for (const k in defaultState.powerPlants) {
           gameState.powerPlants[k] = { ...defaultState.powerPlants[k], ...(parsed.powerPlants?.[k] || {}) };
         }
@@ -783,11 +988,24 @@
         for (const k in defaultState.pshop) {
           gameState.pshop[k] = { ...defaultState.pshop[k], ...(parsed.pshop?.[k] || {}) };
         }
+        for (const k in defaultState.planets.list) {
+          gameState.planets.list[k] = { ...defaultState.planets.list[k], ...(parsed.planets?.list?.[k] || {}) };
+        }
+        for (const k in defaultState.expedition.missions) {
+          gameState.expedition.missions[k] = { ...defaultState.expedition.missions[k], ...(parsed.expedition?.missions?.[k] || {}) };
+        }
         for (const k in defaultState.achievements) {
           gameState.achievements[k] = { ...defaultState.achievements[k], ...(parsed.achievements?.[k] || {}) };
         }
 
         const now = Date.now();
+        // 檢查遠征是否在離線期間完成
+        if (gameState.expedition.activeKey && !gameState.expedition.completed) {
+          if (now >= gameState.expedition.endTime) {
+            gameState.expedition.completed = true;
+          }
+        }
+
         const offlineSeconds = (now - gameState.lastSaveTime) / 1000;
         if (offlineSeconds > 5) {
           const offlineGains = getCPS() * offlineSeconds;
@@ -821,6 +1039,15 @@
     if (buffTimer > 0) {
       buffTimer -= dt;
       if (buffTimer < 0) buffTimer = 0;
+    }
+
+    // 檢查遠征進度
+    const exp = gameState.expedition;
+    if (exp.activeKey && !exp.completed) {
+      if (now >= exp.endTime) {
+        exp.completed = true;
+        createFloatText(window.innerWidth / 2, 180, "🛸 遠征艦隊順利返航！點擊領取獎勵", true);
+      }
     }
 
     const eStats = getEnergyStats();
